@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>ns api</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <!--<script src="call.js"></script>-->
+</head>
+
+<body>
+    <ul class="nav nav-tabs">
+        <li class="nav-item"><a class="nav-link" href="index.html">Heen</a></li>
+        <li class="nav-item"><a class="nav-link active" href="terug.html">Terug</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Bus</a></li>
+    </ul>
+    <div class="table-responsive">
+        <table class="table">
+            <thead class="text-center">
+                <tr>
+                    <th class="text-center">Vertrek</th>
+                    <th>Spoor</th>
+                    <th>Aankomst</th>
+                </tr>
+            </thead>
+            <tbody class="text-center" id="train-table">
+
+            </tbody>
+        </table>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+</body>
+
+<script type="text/javascript">
+    $(function () {
+        var params = {
+            "product": "STUDENT_WEEK",
+            "travelClass": "SECOND_CLASS",
+            "fromStation": "asd",
+            "toStation": "amr",
+        };
+
+        $.ajax({
+            url: "https://gateway.apiportal.ns.nl/public-reisinformatie/api/v3/trips?" + $.param(params),
+            beforeSend: function (xhrObj) {
+                // Request headers
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key", "API-KEY");
+            },
+            type: "GET",
+            // Request body
+            data: {  }
+        })
+            .done(function (data) {
+                for (let index = 0; index < 8; index++) {
+                    var optimal = data.trips[index].legs[0].product.categoryCode;
+
+                    if (optimal === "IC") {
+                    //checking for delays
+                    if (data.trips[index].legs[0].origin.hasOwnProperty('actualDateTime')) {
+                        var departure = new Date(data.trips[index].legs[0].origin.actualDateTime);
+                    }
+                    else var departure = new Date(data.trips[index].legs[0].origin.plannedDateTime);
+
+                    if (data.trips[index].legs[0].stops[data.trips[index].legs[0].stops.length - 1].hasOwnProperty('actualArrivalDateTime')) {
+                        var arrival = new Date(data.trips[index].legs[0].stops[data.trips[index].legs[0].stops.length - 1].actualArrivalDateTime);
+                    }
+                    else var arrival = new Date(data.trips[index].legs[0].stops[data.trips[index].legs[0].stops.length - 1].plannedArrivalDateTime);
+
+                    console.log(arrival + " " + departure)
+
+                    //checking if track changed
+                    if (data.trips[index].legs[0].origin.hasOwnProperty('actualTrack')) {
+                        var track = data.trips[index].legs[0].origin.actualTrack;
+                    }
+                    else var track = data.trips[index].legs[0].origin.plannedTrack;
+
+                    let arrivalTime = (arrival.getHours()<10?'0':'') + arrival.getHours() + ":" + (arrival.getMinutes()<10?'0':'') + arrival.getMinutes()
+
+                    let departureTime = (departure.getHours()<10?'0':'') + departure.getHours() + ":" + (departure.getMinutes()<10?'0':'') + departure.getMinutes()
+
+                    $("#train-table").append(
+                        "<tr>" +
+                        "<td>" + departureTime + "</td>" +
+                        "<td>" + track + "</td>" +
+                        "<td>" + arrivalTime + "</td>" +
+                        "</tr>");
+
+                    }
+
+
+
+                };
+            })
+            .fail(function () {
+                alert("error");
+            });
+    });
+</script>
+
+</html>
